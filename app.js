@@ -8,6 +8,9 @@
   const statusOf = (g) => saved[g.id] || g.status || 'idea';
   const setStatus = (g, s) => { saved[g.id] = s; try { localStorage.setItem(LS, JSON.stringify(saved)); } catch (e) { /* storage unavailable */ } render(); };
   const pinUrl = (n) => { const h = H[n - 1]; return h ? `https://i.pinimg.com/474x/${h.slice(0, 2)}/${h.slice(2, 4)}/${h.slice(4, 6)}/${h}.jpg` : ''; };
+  const OWNER = { all: 'Все', mine: 'Мои', nastya: 'Насти', both: 'Общие' };
+  const ownerOf = (g) => g.from === 'nastya' ? 'nastya' : g.from === 'both' ? 'both' : 'mine';
+  let owner = 'all';
   let filter = (location.hash || '').slice(1);
   if (!SPHERES[filter]) filter = '';
 
@@ -28,23 +31,27 @@
     const doing = GOALS.filter((g) => statusOf(g) === 'doing').length;
     const box = document.getElementById('stats');
     const ticks = el('div', { class: 'ticks', 'aria-hidden': 'true' });
-    for (let i = 0; i < TARGET; i++) ticks.append(el('i', { class: i < done ? 'done' : i < GOALS.length ? 'on' : '' }));
+    const total = Math.max(TARGET, GOALS.length);
+    for (let i = 0; i < total; i++) ticks.append(el('i', { class: i < done ? 'done' : i < GOALS.length ? 'on' : '' }));
     box.replaceChildren(
-      el('div', { class: 'orb-main', role: 'img', 'aria-label': `Записано ${GOALS.length} целей из ${TARGET}` }, el('span', null, 'Целей'), el('b', null, String(GOALS.length)), el('small', null, 'из ' + TARGET)),
+      el('div', { class: 'orb-main', role: 'img', 'aria-label': `Записано ${GOALS.length} целей из ${TARGET}` }, el('span', null, 'Целей'), el('b', null, String(GOALS.length)), el('small', null, GOALS.length > TARGET ? 'больше ' + TARGET + '!' : 'из ' + TARGET)),
       el('div', { class: 'orb-side' },
         el('div', { class: 'orb-sm' }, el('b', null, String(doing)), el('span', null, 'в работе')),
         el('div', { class: 'orb-sm done' }, el('b', null, String(done)), el('span', null, 'сбылось'))),
       ticks,
-      el('div', { class: 'ticks-label' }, el('span', null, '1'), el('span', null, 'Записано ' + GOALS.length + ' · сбылось ' + done), el('span', null, String(TARGET))));
+      el('div', { class: 'ticks-label' }, el('span', null, '1'), el('span', null, 'Записано ' + GOALS.length + ' · сбылось ' + done), el('span', null, String(total))));
   }
 
   function toolbar() {
     const bar = document.getElementById('toolbar');
+    const inOwner = GOALS.filter((g) => owner === 'all' || ownerOf(g) === owner);
+    const seg = el('div', { class: 'seg', role: 'group', 'aria-label': 'Чьи цели' }, ...Object.entries(OWNER).map(([k, label]) =>
+      el('button', { type: 'button', 'aria-pressed': String(owner === k), onclick: () => { owner = k; render(); } }, label, el('span', { class: 'n' }, String(k === 'all' ? GOALS.length : GOALS.filter((g) => ownerOf(g) === k).length)))));
     const mk = (key, label, color, count) => el('button', { type: 'button', class: 'chip', 'aria-pressed': String(filter === key), onclick: () => { filter = key; history.replaceState(null, '', key ? '#' + key : location.pathname); render(); } },
       color ? el('span', { class: 'dot', style: `background:${color}` }) : null, label, el('span', { class: 'n' }, count));
-    const chips = [mk('', 'Все', null, GOALS.length)];
-    Object.entries(SPHERES).forEach(([k, s]) => { const c = GOALS.filter((g) => g.sphere === k).length; if (c) chips.push(mk(k, s.name, s.color, c)); });
-    bar.replaceChildren(...chips);
+    const chips = [mk('', 'Все сферы', null, inOwner.length)];
+    Object.entries(SPHERES).forEach(([k, s]) => { const c = inOwner.filter((g) => g.sphere === k).length; if (c) chips.push(mk(k, s.name, s.color, c)); });
+    bar.replaceChildren(seg, el('span', { class: 'sep', 'aria-hidden': 'true' }), ...chips);
   }
 
   function collage(g) {
@@ -62,7 +69,7 @@
 
   function cards() {
     const grid = document.getElementById('grid');
-    const list = GOALS.filter((g) => !filter || g.sphere === filter);
+    const list = GOALS.filter((g) => (!filter || g.sphere === filter) && (owner === 'all' || ownerOf(g) === owner));
     grid.replaceChildren(...list.map((g) => {
       const s = statusOf(g), sp = SPHERES[g.sphere] || { name: '', color: '#888' };
       return el('button', { type: 'button', class: 'card' + (s === 'done' ? ' done' : '') + (g.feature ? ' feature' : ''), onclick: () => open(g) },
