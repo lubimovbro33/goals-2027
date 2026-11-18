@@ -23,11 +23,15 @@
     const done = GOALS.filter((g) => statusOf(g) === 'done').length;
     const doing = GOALS.filter((g) => statusOf(g) === 'doing').length;
     const box = document.getElementById('stats');
+    const ticks = el('div', { class: 'ticks', 'aria-hidden': 'true' });
+    for (let i = 0; i < TARGET; i++) ticks.append(el('i', { class: i < done ? 'done' : i < GOALS.length ? 'on' : '' }));
     box.replaceChildren(
-      el('div', { class: 'stat' }, el('b', null, `${GOALS.length} / ${TARGET}`), el('span', null, 'целей записано'), el('div', { class: 'bar' }, el('i', { style: `width:${Math.min(100, GOALS.length / TARGET * 100)}%` }))),
-      el('div', { class: 'stat' }, el('b', null, String(doing)), el('span', null, 'в работе')),
-      el('div', { class: 'stat' }, el('b', null, String(done)), el('span', null, 'сбылось'), el('div', { class: 'bar' }, el('i', { style: `width:${GOALS.length ? done / GOALS.length * 100 : 0}%;background:var(--ok)` })))
-    );
+      el('div', { class: 'orb-main', role: 'img', 'aria-label': `Записано ${GOALS.length} целей из ${TARGET}` }, el('span', null, 'Целей'), el('b', null, String(GOALS.length)), el('small', null, 'из ' + TARGET)),
+      el('div', { class: 'orb-side' },
+        el('div', { class: 'orb-sm' }, el('b', null, String(doing)), el('span', null, 'в работе')),
+        el('div', { class: 'orb-sm done' }, el('b', null, String(done)), el('span', null, 'сбылось'))),
+      ticks,
+      el('div', { class: 'ticks-label' }, el('span', null, '1'), el('span', null, 'Записано ' + GOALS.length + ' · сбылось ' + done), el('span', null, String(TARGET))));
   }
 
   function toolbar() {
@@ -57,11 +61,11 @@
     const list = GOALS.filter((g) => !filter || g.sphere === filter);
     grid.replaceChildren(...list.map((g) => {
       const s = statusOf(g), sp = SPHERES[g.sphere] || { name: '', color: '#888' };
-      return el('button', { type: 'button', class: 'card' + (s === 'done' ? ' done' : ''), onclick: () => open(g) },
+      return el('button', { type: 'button', class: 'card' + (s === 'done' ? ' done' : '') + (g.feature ? ' feature' : ''), onclick: () => open(g) },
         collage(g),
         el('div', { class: 'body' },
           el('div', { class: 'meta' }, el('span', { class: 'sph' }, el('i', { style: `background:${sp.color}` }), sp.name), el('span', { class: 'status ' + s }, STATUS[s]), g.when ? el('span', null, g.when) : null),
-          el('h3', null, g.title),
+          el('div', { class: 'row' }, el('h3', null, g.title), el('span', { class: 'go', 'aria-hidden': 'true' }, '›')),
           g.why ? el('p', null, g.why) : null));
     }));
   }

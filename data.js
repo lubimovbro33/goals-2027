@@ -4,7 +4,7 @@ window.PIN_HASHES = `7192be86513e22a4a96cb23b4cd76144,26ff68ce4cc334c6b81e599e54
 
 // Сферы жизни
 window.SPHERES = {
-  money: { name: 'Деньги и бизнес', color: '#c9a45c' },
+  money: { name: 'Деньги и бизнес', color: '#9bd13a' },
   home: { name: 'Дом и земля', color: '#7fa37a' },
   travel: { name: 'Путешествия', color: '#5b9bd5' },
   love: { name: 'Настя и семья', color: '#d9776b' },
@@ -17,7 +17,7 @@ window.SPHERES = {
 // Цели. pins — номера пинов на доске (1 = самый верхний).
 window.GOALS = [
   {
-    id: 'million', sphere: 'money', title: '$1 000 000 за 2027 год',
+    id: 'million', sphere: 'money', feature: true, title: '$1 000 000 за 2027 год',
     why: 'Рывок в десять раз. Не на 50% богаче, а в десятки раз.',
     when: '2027', cost: '', first: 'Спросить Олега про «шаг один»: модель, которая даёт $83K в месяц.',
     pins: [23, 25, 26, 37, 38, 39]
