@@ -17,7 +17,11 @@
     kids.flat().forEach((k) => k != null && n.append(k instanceof Node ? k : document.createTextNode(String(k))));
     return n;
   };
-  const img = (n) => el('img', { src: pinUrl(n), alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
+  const unsplash = (id) => `https://images.unsplash.com/photo-${id}?w=640&q=70&auto=format&fit=crop`;
+  const photos = (g) => [...(g.pins || []).map(pinUrl), ...(g.imgs || []).map(unsplash)].filter(Boolean);
+  const imgU = (src) => el('img', { src, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
+  const img = (n) => imgU(pinUrl(n));
+  const FROM = { nastya: 'Из списка Насти', both: 'Общая с Настей' };
 
   function stats() {
     const done = GOALS.filter((g) => statusOf(g) === 'done').length;
@@ -44,12 +48,12 @@
   }
 
   function collage(g) {
-    const pins = g.pins || [];
+    const pins = photos(g);
     if (!pins.length) return el('div', { class: 'nophoto' }, 'Картинки добавим');
     const show = pins.slice(0, 4);
     const box = el('div', { class: 'collage c' + show.length });
-    show.forEach((n, i) => {
-      const ph = el('div', { class: 'ph' }, img(n));
+    show.forEach((src, i) => {
+      const ph = el('div', { class: 'ph' }, imgU(src));
       if (i === show.length - 1 && pins.length > show.length) ph.append(el('div', { class: 'more' }, '+' + (pins.length - show.length)));
       box.append(ph);
     });
@@ -64,7 +68,7 @@
       return el('button', { type: 'button', class: 'card' + (s === 'done' ? ' done' : '') + (g.feature ? ' feature' : ''), onclick: () => open(g) },
         collage(g),
         el('div', { class: 'body' },
-          el('div', { class: 'meta' }, el('span', { class: 'sph' }, el('i', { style: `background:${sp.color}` }), sp.name), el('span', { class: 'status ' + s }, STATUS[s]), g.when ? el('span', null, g.when) : null),
+          el('div', { class: 'meta' }, el('span', { class: 'sph' }, el('i', { style: `background:${sp.color}` }), sp.name), el('span', { class: 'status ' + s }, STATUS[s]), g.when ? el('span', null, g.when) : null, g.from ? el('span', { class: 'from' }, FROM[g.from]) : null),
           el('div', { class: 'row' }, el('h3', null, g.title), el('span', { class: 'go', 'aria-hidden': 'true' }, '›')),
           g.why ? el('p', null, g.why) : null));
     }));
@@ -84,13 +88,13 @@
     const facts = [['Когда', g.when], ['Сколько стоит', g.cost], ['Первый шаг', g.first]].filter(([, v]) => v);
     document.getElementById('dlg-inner').replaceChildren(
       el('div', { class: 'dlg-head' },
-        el('div', null, el('div', { class: 'meta' }, el('span', { class: 'sph' }, el('i', { style: `background:${sp.color}` }), sp.name)), el('h2', { id: 'dlg-title' }, g.title)),
+        el('div', null, el('div', { class: 'meta' }, el('span', { class: 'sph' }, el('i', { style: `background:${sp.color}` }), sp.name), g.from ? el('span', { class: 'from' }, FROM[g.from]) : null), el('h2', { id: 'dlg-title' }, g.title)),
         el('button', { type: 'button', class: 'x', 'aria-label': 'Закрыть', onclick: () => dlg.close() }, '×')),
       el('div', { class: 'dlg-body' },
         g.why ? el('p', { style: 'margin:0;max-width:70ch' }, g.why) : null,
         facts.length ? el('div', { class: 'facts' }, ...facts.map(([k, v]) => el('div', { class: 'fact' }, el('span', null, k), v))) : null,
         el('div', { class: 'statusbar' }, el('span', { class: 'note' }, 'Статус:'), ...Object.entries(STATUS).map(([k, label]) => el('button', { type: 'button', class: 'chip', 'aria-pressed': String(s === k), onclick: () => { setStatus(g, k); open(g); } }, label))),
-        (g.pins || []).length ? el('div', { class: 'gallery' }, ...g.pins.map(img)) : el('p', { class: 'note' }, 'Картинок пока нет — подберём с доски.')));
+        photos(g).length ? el('div', { class: 'gallery' }, ...photos(g).map(imgU)) : el('p', { class: 'note' }, 'Картинок пока нет — подберём с доски.')));
     if (!dlg.open) dlg.showModal();
   }
   dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
